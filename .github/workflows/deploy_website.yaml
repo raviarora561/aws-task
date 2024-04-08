@@ -1,0 +1,29 @@
+name: Deploy Static Website
+
+on: [push]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v1
+
+    - name: Terraform Init and Apply
+      run: |
+        cd infra
+        terraform init
+        terraform apply -auto-approve
+
+    - name: Deploy Website to S3
+      uses: docker://cytopia/ansible:latest
+      with:
+        args: ansible-playbook -v /github/workspace/config/deploy_website.yml
+
+    - name: Test Website Availability
+      run: |
+        chmod +x tests/test_website.sh
+        tests/test_website.sh
